@@ -1,14 +1,20 @@
 locals {
-  helm_template_cmd = "helm template --values='${local_file.values.filename}' --version='${var.chart.version}' '${var.release}' '${var.chart.name}'"
-  values            = yamlencode(var.values)
+  values          = yamlencode(var.values)
+  values_file     = "${path.module}/values/${md5(local.values)}.yaml"
+  old_values_file = "${path.module}/values/prior.yaml"
 }
 
 resource "local_file" "values" {
   sensitive_content = local.values
-  filename          = "${path.module}/values/${md5(local.values)}.yaml"
+  filename          = local.values_file
 
   lifecycle {
     create_before_destroy = true
+  }
+
+  provisioner "local-exec" {
+    when    = "destroy"
+    command = "mv ${self.filename} ${local.old_values_file}"
   }
 }
 
@@ -22,11 +28,11 @@ resource "null_resource" "chart" {
 
   provisioner "local-exec" {
     when    = "create"
-    command = "${local.helm_template_cmd} | kubectl apply -f -"
+    command = "helm template --values='${local.values_file}' --version='${var.chart.version}' '${var.release}' '${var.chart.name}' | kubectl apply -f -"
   }
 
   provisioner "local-exec" {
     when    = "destroy"
-    command = "${local.helm_template_cmd} | kubectl delete -f -"
+    command = "helm template --values='${local.old_values_file}' --version='${var.chart.version}' '${var.release}' '${var.chart.name}' | kubectl delete -f -"
   }
 }
