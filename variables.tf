@@ -13,6 +13,5 @@ variable "release" {
 
 variable "values" {
   description = "Values to supply the Chart"
-  type        = map
   default     = {}
 }
