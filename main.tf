@@ -13,7 +13,7 @@ resource "local_file" "values" {
   }
 
   provisioner "local-exec" {
-    when    = "destroy"
+    when    = destroy
     command = "mv ${self.filename} ${local.old_values_file}"
   }
 }
@@ -27,12 +27,12 @@ resource "null_resource" "chart" {
   }
 
   provisioner "local-exec" {
-    when    = "create"
+    when    = create
     command = "helm template --values='${local.values_file}' --version='${var.chart.version}' '${var.release}' '${var.chart.name}' | kubectl apply -f -"
   }
 
   provisioner "local-exec" {
-    when    = "destroy"
+    when    = destroy
     command = "helm template --values='${local.old_values_file}' --version='${var.chart.version}' '${var.release}' '${var.chart.name}' | kubectl delete -f -"
   }
 }
