@@ -7,6 +7,7 @@ locals {
 resource "local_file" "values" {
   sensitive_content = local.values
   filename          = local.values_file
+  file_permission   = "0660"
 
   lifecycle {
     create_before_destroy = true
